@@ -16,7 +16,7 @@ async (conn, mek, m, { from, args, q, reply }) => {
         
         reply("Downloading video, please wait...");
         
-        const apiUrl = `https://apis.davidcyriltech.my.id/download/tiktok?url=https://vm.tiktok.com/ZMkMuEmmd&apikey=}`;
+        const apiUrl = `https://delirius-apiofc.vercel.app/download/tiktok?url=https://vt.tiktok.com/ZSB2HNoKR/}`;
         const { data } = await axios.get(apiUrl);
         
         if (!data.status || !data.data) return reply("Failed to fetch TikTok video.");
