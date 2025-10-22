@@ -6,53 +6,41 @@ cmd({
     alias: ["ttdl", "tt", "tiktokdl"],
     desc: "Download TikTok video without watermark",
     category: "downloader",
-    react: "🎵",
-    filename: __filename
-},
-async (conn, mek, m, { from, args, q, reply }) => {
+    filename: __filename,
+    use: "<TikTok URL>", // Example usage
+}, async (conn, mek, m, { from, args, q, reply }) => {
     try {
-        if (!q) return reply("Please provide a TikTok video link.");
-        if (!q.includes("tiktok.com")) return reply("Invalid TikTok link.");
+        // 🧩 Validate input
+        if (!q || !q.startsWith("http")) {
+            return reply("*`Need a valid TikTok URL`*\n\nExample: `.tiktok https://www.tiktok.com/@username/video/1234567890`");
+        }
 
-        // React while starting download
-        await conn.sendMessage(from, { react: { text: "🎵", key: mek.key } });
+        // ⏳ React while downloading
+        await conn.sendMessage(from, { react: { text: "⏳", key: mek.key } });
         reply("⏳ Downloading your TikTok video, please wait...");
 
-        const apiUrl = `https://delirius-apiofc.vercel.app/download/tiktok?url=${q}`;
+        // 🌐 Fetch video from API
+        const apiUrl = `https://delirius-apiofc.vercel.app/download/tiktok?url=${encodeURIComponent(q)}`;
         const { data } = await axios.get(apiUrl);
 
-        if (!data || !data.data || !data.data.meta || !data.data.meta.media) {
+        if (!data?.data?.meta?.media) {
             await conn.sendMessage(from, { react: { text: "❌", key: mek.key } });
-            return reply("Failed to fetch TikTok video. Try again later.");
+            return reply("❌ Failed to fetch TikTok video. Try again later.");
         }
 
-        const { title, like, comment, share, author, meta } = data.data;
-        const videoItem = meta.media.find(v => v.type === "video");
-        if (!videoItem || !videoItem.org) {
+        // 🎬 Extract video URL
+        const videoItem = data.data.meta.media.find(v => v.type === "video");
+        if (!videoItem?.org) {
             await conn.sendMessage(from, { react: { text: "❌", key: mek.key } });
-            return reply("Couldn't find video in the response.");
+            return reply("⚠️ Couldn't find video in the response.");
         }
 
-        const caption = `
-📹 *TikTok Video Downloader* 📹
-
-*☱ 👤 User :* ${author.nickname}
-
-*☱ 📖 Title :* ${title}
-
-*☱ 👍 Likes : ${like}*
-
-*☱ 💬 Comments : ${comment}*
-
-*☱ 🔁 Shares : ${share}*`;
-
+        // 📥 Send video (no caption)
         await conn.sendMessage(from, {
             video: { url: videoItem.org },
-            caption,
-            contextInfo: { mentionedJid: [m.sender] }
         }, { quoted: mek });
 
-        // ✅ React when done
+        // ✅ React when download completes
         await conn.sendMessage(from, { react: { text: "✅", key: mek.key } });
 
     } catch (e) {
@@ -62,9 +50,9 @@ async (conn, mek, m, { from, args, q, reply }) => {
         if (e.response) {
             reply(`API error: ${e.response.status} - ${e.response.statusText}`);
         } else if (e.request) {
-            reply("No response from API. Please try again later.");
+            reply("🌐 No response from API. Please try again later.");
         } else {
-            reply(`Unexpected error: ${e.message}`);
+            reply(`⚠️ Unexpected error: ${e.message}`);
         }
     }
 });
